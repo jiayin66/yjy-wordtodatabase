@@ -4,6 +4,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,5 +20,9 @@ public class WordToDatabaseController {
 	@PostMapping("/text")
 	public String readWordToDatabase(@RequestParam("text") MultipartFile text,HttpServletResponse response,@RequestParam("tableName") String tableName) {
 		return wordToDatabaseService.readWordToDatabase(text,response,tableName);
+	}
+	@PostMapping("/excel")
+	public String readDatabaseToExcel(@RequestBody String text,HttpServletResponse response) {
+		return wordToDatabaseService.readDatabaseToExcel(text,response);
 	}
 }

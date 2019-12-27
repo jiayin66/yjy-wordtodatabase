@@ -3,21 +3,28 @@ package com.yjy.service;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.yjy.model.ModelExcel;
+import com.yjy.util.ExcelTemplateExporter;
 
 import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 public class WordToDatabaseService {
-
+	@Autowired
+	private ExcelTemplateExporter excelTemplateExporter;
 	public String readWordToDatabase(MultipartFile text, HttpServletResponse response,String tableName) {
 		//1.按行解析，拿到每行集合
 		List<String> txtRecordList=new ArrayList<String>();	
@@ -81,6 +88,46 @@ public class WordToDatabaseService {
 			}
 		}
 		return sb.toString();
+	}
+
+	public String readDatabaseToExcel(String text, HttpServletResponse response) {
+		List<ModelExcel> result=new ArrayList<ModelExcel>();
+		//根据分号拆分
+		String[] split = text.split(";");
+		//处理备注
+		Map<String,String> columnRemark=new HashMap<String,String>();
+		for(int i=0;i<split.length;i++) {
+			if(i==0) {
+				continue;
+			}
+			String comment=split[i];
+			//过滤掉表的那个
+			if(comment.indexOf(".")==-1) {
+				continue;
+			}
+			String columnName = comment.substring(comment.indexOf(".")+1, comment.indexOf("is")).trim();
+			String remark = comment.substring(comment.indexOf("is")+2);
+			remark=remark.replaceAll("\'", "");
+			columnRemark.put(columnName.trim(), remark);
+		}
+		//处理对象
+		String table = split[0];
+		String[] splitInner = table.split(",(\n|\r\n)");
+		int i=1;
+		for(String str:splitInner) {
+			str=str.replaceAll(" BYTE", "");
+			String[] inerStr = str.trim().split("[ ]+");
+			String columName=inerStr[0].trim();
+			ModelExcel modelExcel = new ModelExcel(i,columName,inerStr[1]);
+			if(columnRemark.containsKey(columName)) {
+				modelExcel.setName(columnRemark.get(columName));
+			}
+			result.add(modelExcel);
+			i++;
+		}
+		System.out.println(JSON.toJSONString(result));
+		excelTemplateExporter.exportExcel(result, "数据库模型", "数据库模型", ModelExcel.class, "数据库模型.xls", response);
+		return "true";
 	}
 
 }

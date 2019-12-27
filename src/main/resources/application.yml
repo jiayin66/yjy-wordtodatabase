@@ -2,7 +2,7 @@ jp:
   swagger:
     basePackage: com.yjy.controller
     apiInfo:
-      title: demo
+      title: bill
       description: demo
       version: 1.0.0
       email: 2864245248@qq.com
